@@ -4,15 +4,12 @@ const app = express();
 // =========================================================
 // PHẦN 1: MỒI NHỬ CHO SAST (QUÉT TĨNH - TRIVY)
 // =========================================================
+// Lỗi lộ khóa RSA
+const db_private_key = `-----BEGIN RSA PRIVATE KEY-----
+MIIEogIBAAKCAQEA4ilq7+iF8UjS2kV5Y2w6sYjFz1nE2x5p6lX1H6vJz
+-----END RSA PRIVATE KEY-----`;
 
-// 1. Lỗi: Lộ khóa AWS (Đã sửa lại cho giống thật để Trivy bắt)
-// Access Key ID: Bắt đầu bằng AKIA + 16 ký tự bất kỳ (Viết hoa + Số)
-const AWS_ACCESS_KEY_ID = "AKIADY75K892MN43QW12"; 
-
-// Secret Key: Một chuỗi ngẫu nhiên dài khoảng 40 ký tự
-const AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYz754896213";
-
-// 2. Lỗi: Lộ Github Token
+// Lỗi: Lộ Github Token
 const GITHUB_TOKEN = "ghp_R52342345234523452345234523452345234";
 
 // =========================================================
