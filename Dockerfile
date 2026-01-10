@@ -1,20 +1,25 @@
-# Sử dụng Node.js bản nhẹ (Alpine)
-FROM node:18-alpine
+FROM nginx:alpine
+COPY 23127249.html /usr/share/nginx/html/index.html
 
-# Tạo thư mục làm việc
-WORKDIR /app
 
-# Copy file package.json vào trước để cài thư viện
-COPY package.json .
 
-# Cài đặt thư viện (Express)
-RUN npm install
+# # Sử dụng Node.js bản nhẹ (Alpine)
+# FROM node:18-alpine
 
-# Copy toàn bộ code (server.js) vào
-COPY . .
+# # Tạo thư mục làm việc
+# WORKDIR /app
 
-# Mở cổng 80
-EXPOSE 80
+# # Copy file package.json vào trước để cài thư viện
+# COPY package.json .
 
-# Chạy ứng dụng
-CMD ["node", "server.js"]
+# # Cài đặt thư viện (Express)
+# RUN npm install
+
+# # Copy toàn bộ code (server.js) vào
+# COPY . .
+
+# # Mở cổng 80
+# EXPOSE 80
+
+# # Chạy ứng dụng
+# CMD ["node", "server.js"]
