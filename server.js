@@ -1,54 +1,65 @@
-// const express = require('express');
-// const app = express();
+const express = require('express');
+const app = express();
 
-// // =========================================================
-// // PHẦN 1: MỒI NHỬ CHO SAST (QUÉT TĨNH - TRIVY)
-// // Mục tiêu: Trivy quét file này sẽ thấy các chuỗi bí mật bị lộ
-// // =========================================================
+// =========================================================
+// PHẦN 1: MỒI NHỬ CHO SAST (QUÉT TĨNH - TRIVY)
+// =========================================================
 
-// // Lỗi: Hardcoded Secrets (Lộ khóa AWS) -> Trivy sẽ báo Severity: CRITICAL
-// const AWS_ACCESS_KEY_ID = "AKIAIO5FODNN7EXAMPLE"; 
-// const AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
+// 1. Lỗi: Lộ khóa AWS (Đã sửa lại cho giống thật để Trivy bắt)
+// Access Key ID: Bắt đầu bằng AKIA + 16 ký tự bất kỳ (Viết hoa + Số)
+const AWS_ACCESS_KEY_ID = "AKIADY75K892MN43QW12"; 
 
-// // Lỗi: Hardcoded Secrets (Lộ Github Token) -> Trivy sẽ báo Severity: CRITICAL
-// const GITHUB_TOKEN = "ghp_R52342345234523452345234523452345234"; 
+// Secret Key: Một chuỗi ngẫu nhiên dài khoảng 40 ký tự
+const AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYz754896213";
 
-// // =========================================================
-// // PHẦN 2: MỒI NHỬ CHO DAST (QUÉT ĐỘNG - OWASP ZAP)
-// // Mục tiêu: ZAP tấn công vào web đang chạy sẽ thấy lỗi XSS
-// // =========================================================
+// 2. Lỗi: Lộ Github Token
+const GITHUB_TOKEN = "ghp_R52342345234523452345234523452345234";
 
-// app.get('/', (req, res) => {
-//     // Lấy tham số 'name' từ đường dẫn URL (ví dụ: localhost/?name=Hacker)
-//     const name = req.query.name || 'Admin';
+// =========================================================
+// PHẦN 2: MỒI NHỬ CHO DAST (QUÉT ĐỘNG - OWASP ZAP)
+// =========================================================
 
-//     // LỖ HỔNG XSS (Reflected Cross-Site Scripting)
-//     // Code này lấy input của người dùng và in thẳng ra HTML mà không qua lọc (Sanitize).
-//     // Nếu Hacker gửi: localhost/?name=<script>alert('Hacked')</script>
-//     // Trình duyệt sẽ chạy đoạn script đó ngay lập tức.
+app.get('/', (req, res) => {
+    // 1. LỖI COOKIE KHÔNG AN TOÀN (Insecure Cookie)
+    // ZAP sẽ báo: "Cookie No HttpOnly Flag" và "Cookie Without Secure Flag"
+    // Giải thích: Cookie này có thể bị Javascript độc hại đọc được (do thiếu httpOnly).
+    res.cookie('session_id', 'admin_secret_12345', { 
+        httpOnly: false, // Lỗi: Cho phép JS đọc cookie
+        secure: false    // Lỗi: Truyền qua HTTP thường
+    });
+
+    // 2. LỖI XSS (Reflected Cross-Site Scripting)
+    // ZAP sẽ báo: "Cross Site Scripting (Reflected)"
+    const name = req.query.name || 'Admin';
     
-//     const htmlContent = `
-//         <!DOCTYPE html>
-//         <html>
-//         <head>
-//             <title>Vulnerable App</title>
-//             <style>
-//                 body { font-family: sans-serif; text-align: center; padding-top: 50px; }
-//                 h1 { color: red; }
-//             </style>
-//         </head>
-//         <body>
-//             <h1>DEMO DEVSECOPS - DO AN NANG CAO</h1>
-//             <h3>Chao mung: ${name}</h3> 
-//             <p>Trang web nay chua lo hong bao mat de demo CI/CD.</p>
-//         </body>
-//         </html>
-//     `;
+    // 3. LỖI OPEN REDIRECT (Chuyển hướng không an toàn)
+    // Thử truy cập: localhost/?url=http://google.com
+    // ZAP sẽ báo: "External Redirect"
+    const redirectUrl = req.query.url;
+    if (redirectUrl) {
+        return res.redirect(redirectUrl);
+    }
 
-//     res.send(htmlContent);
-// });
+    const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Vulnerable App</title>
+        </head>
+        <body>
+            <h1>DEMO DEVSECOPS - FULL VULNERABILITIES</h1>
+            <h3>Xin chao: ${name}</h3> 
+            <p>Trang web nay chua Cookies hong, XSS va Open Redirect.</p>
+            <br>
+            <a href="/?url=https://www.google.com">Test Open Redirect (Di toi Google)</a>
+        </body>
+        </html>
+    `;
 
-// // Chạy server tại cổng 80
-// app.listen(80, () => {
-//     console.log('Vulnerable App is running on port 80...');
-// });
+    res.send(htmlContent);
+});
+
+// Chạy server
+app.listen(80, () => {
+    console.log('App running on port 80...');
+});
